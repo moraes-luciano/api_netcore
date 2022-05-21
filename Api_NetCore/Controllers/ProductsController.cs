@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Api_NetCore.Data;
+using Api_NetCore.Filters;
 using Api_NetCore.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ namespace Api_NetCore.Controllers
         
         
         [HttpGet]
+        [ServiceFilter(typeof(ApiLoggingFilter))]
         public ActionResult<IEnumerable<Product>> Get()
         {
             var products = _dbContext.Products.AsNoTracking().ToList();

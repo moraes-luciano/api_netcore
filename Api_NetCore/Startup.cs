@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Api_NetCore.Data;
+using Api_NetCore.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -35,6 +36,7 @@ namespace Api_NetCore
                 options => options.UseMySql(connstring, ServerVersion.AutoDetect(connstring))
             );
             
+            services.AddScoped<ApiLoggingFilter>();
             services.AddControllers().AddNewtonsoftJson(x => 
                 x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);;
             services.AddSwaggerGen(c =>
