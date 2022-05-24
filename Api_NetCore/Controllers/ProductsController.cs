@@ -4,6 +4,7 @@ using System.Linq;
 using Api_NetCore.Data;
 using Api_NetCore.Filters;
 using Api_NetCore.Models;
+using Api_NetCore.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,11 +14,11 @@ namespace Api_NetCore.Controllers
     [Route("[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IUnitOfWork _uof;
 
-        public ProductsController(AppDbContext dbContext)
+        public ProductsController(IUnitOfWork dbContext)
         {
-            _dbContext = dbContext;
+            _uof = dbContext;
         }
         
         
@@ -25,7 +26,7 @@ namespace Api_NetCore.Controllers
         [ServiceFilter(typeof(ApiLoggingFilter))]
         public ActionResult<IEnumerable<Product>> Get()
         {
-            var products = _dbContext.Products.AsNoTracking().ToList();
+            var products = _uof.ProductRepository.Get().ToList();
             
             if(products is null)
             {
@@ -37,7 +38,7 @@ namespace Api_NetCore.Controllers
         [HttpGet("{id:int}", Name = "GetThisProduct")]
         public ActionResult<Product> Get(int id)
         {
-            var product = _dbContext.Products.FirstOrDefault(prod => prod.Id == id);
+            var product = _uof.ProductRepository.GetById(prod => prod.Id == id);
             
             if (product is null)
             {
@@ -46,6 +47,11 @@ namespace Api_NetCore.Controllers
             return product;
         }
 
+        [HttpGet]
+        public ActionResult<IEnumerable<Product>> GetProductsByPrice()
+        {
+            return _uof.ProductRepository.GetProductsByPrice().ToList();
+        }
         [HttpPost]
         public ActionResult Post(Product product)
         {
@@ -54,8 +60,8 @@ namespace Api_NetCore.Controllers
                 return BadRequest();
             }
             
-            _dbContext.Products.Add(product);
-            _dbContext.SaveChanges();
+            _uof.ProductRepository.Add(product);
+            _uof.Commit();
             return new CreatedAtRouteResult("GetThisProduct", new {id = product.Id}, product);
         }
 
@@ -67,8 +73,8 @@ namespace Api_NetCore.Controllers
                 return BadRequest();
             }
 
-            _dbContext.Entry(product).State = EntityState.Modified;
-            _dbContext.SaveChanges();
+            _uof.ProductRepository.Update(product);
+            _uof.Commit();
 
             return Ok(product);
         }
@@ -76,14 +82,14 @@ namespace Api_NetCore.Controllers
         [HttpDelete("{id:int}")]
         public ActionResult Delete(int id)
         {
-            var product = _dbContext.Products.FirstOrDefault(prod => prod.Id == id);
+            var product = _uof.ProductRepository.GetById(prod => prod.Id == id);
             if (product is null)
             {
                 return NotFound();
             }
 
-            _dbContext.Remove(product);
-            _dbContext.SaveChanges();
+            _uof.ProductRepository.Delete(product);
+            _uof.Commit();
             return Ok(product);
         }
 

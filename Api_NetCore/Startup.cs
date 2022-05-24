@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Api_NetCore.Data;
 using Api_NetCore.Filters;
+using Api_NetCore.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -37,8 +38,12 @@ namespace Api_NetCore
             );
             
             services.AddScoped<ApiLoggingFilter>();
+            
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
             services.AddControllers().AddNewtonsoftJson(x => 
                 x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);;
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo {Title = "Api_NetCore", Version = "v1"});

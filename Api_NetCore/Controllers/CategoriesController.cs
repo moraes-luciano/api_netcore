@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Api_NetCore.Data;
 using Api_NetCore.Models;
+using Api_NetCore.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,18 +13,18 @@ namespace Api_NetCore.Controllers
     [Route("[controller]")]
     public class CategoriesController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
+        private readonly IUnitOfWork _uof;
 
-        public CategoriesController(AppDbContext dbContext)
+        public CategoriesController(IUnitOfWork dbContext)
         {
-            _dbContext = dbContext;
+            _uof = dbContext;
         }
         
         
         [HttpGet]
         public ActionResult<IEnumerable<Category>> Get()
         {
-            var categories = _dbContext.Categories.AsNoTracking().ToList();
+            var categories = _uof.CategoryRepository.Get().ToList();
             return categories;
         }
 
@@ -31,7 +32,7 @@ namespace Api_NetCore.Controllers
         [HttpGet("{id:int}", Name = "GetThisCategory")]
         public ActionResult<Category> Get(int id)
         {
-            var category = _dbContext.Categories.FirstOrDefault(catg => catg.Id == id);
+            var category = _uof.CategoryRepository.GetById(catg => catg.Id == id);
             if (category is null)
             {
                 return NotFound();
@@ -43,7 +44,7 @@ namespace Api_NetCore.Controllers
         [HttpGet("products")]
         public ActionResult<IEnumerable<Category>> GetCategoryWithProduct()
         {
-            return _dbContext.Categories.Include(p => p.Products).ToList();
+            return _uof.CategoryRepository.GetCategoryByProducts().ToList();
         }
 
         [HttpPost]
@@ -54,8 +55,8 @@ namespace Api_NetCore.Controllers
                 return BadRequest();
             }
 
-            _dbContext.Categories.Add(category);
-            _dbContext.SaveChanges();
+            _uof.CategoryRepository.Add(category);
+            _uof.Commit();
 
             return new CreatedAtRouteResult("GetThisCategory", new {id = category.Id}, category);
         }
@@ -68,8 +69,8 @@ namespace Api_NetCore.Controllers
                 return BadRequest();
             }
 
-            _dbContext.Entry(category).State = EntityState.Modified;
-            _dbContext.SaveChanges();
+            _uof.CategoryRepository.Update(category);
+            _uof.Commit();
 
             return Ok(category);
         }
@@ -77,14 +78,14 @@ namespace Api_NetCore.Controllers
         [HttpDelete("{id:int}")]
         public ActionResult<Category> Delete(int id)
         {
-            var category = _dbContext.Categories.FirstOrDefault(catg => catg.Id == id);
+            var category = _uof.CategoryRepository.GetById(catg => catg.Id == id);
             if (category is null)
             {
                 return BadRequest();
             }
 
-            _dbContext.Categories.Remove(category);
-            _dbContext.SaveChanges();
+            _uof.CategoryRepository.Delete(category);
+            _uof.Commit();
 
             return Ok(category);
         }
